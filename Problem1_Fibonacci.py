@@ -3,27 +3,44 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 @dataclass
-class FibResult:
-    start_a: int
-    start_b: int
-    steps: int
-    history: List[Tuple[int, int]]
+class FibonacciRun:
+    seed_a: int
+    seed_b: int
+    iterations: int
+    sequence: List[Tuple[int, int]]
 
-def fibonacci_steps(a0: int, b0: int, steps: int = 12) -> FibResult:
-    """Run exactly `steps` Fibonacci updates: (a, b) <- (b, a + b)."""
-    a, b = a0, b0
-    history = [(a, b)]
-    for _ in range(steps):
-        a, b = b, a + b
-        history.append((a, b))
-    return FibResult(a0, b0, steps, history)
+def run_fibonacci(seed_a: int, seed_b: int, iterations: int = 12) -> FibonacciRun:
+    """
+    Perform iterative Fibonacci updates:
+        (a, b) -> (b, a + b)
+    for a fixed number of iterations.
+    """
+    a, b = seed_a, seed_b
+    sequence: List[Tuple[int, int]] = [(a, b)]
+
+    for _ in range(iterations):
+        next_a = b
+        next_b = a + b
+        a, b = next_a, next_b
+        sequence.append((a, b))
+
+    return FibonacciRun(seed_a, seed_b, iterations, sequence)
+
+
+def display_run(result: FibonacciRun) -> None:
+    print(f"Start: ({result.seed_a}, {result.seed_b}) | Steps: {result.iterations}")
+    print("Step   A        B")
+
+    for idx, (a_val, b_val) in enumerate(result.sequence):
+        print(f"{idx:>4} {a_val:>8} {b_val:>8}")
+
+    final_a, final_b = result.sequence[-1]
+    print(f"Result -> A: {final_a}, B: {final_b}\n")
+
 
 if __name__ == "__main__":
-    runs = [(0, 1), (3, 7)]
-    for a0, b0 in runs:
-        res = fibonacci_steps(a0, b0, 12)
-        print(f"Fibonacci start=({a0},{b0}), steps=12")
-        print("k    A      B")
-        for k, (a, b) in enumerate(res.history):
-            print(f"{k:2d} {a:6d} {b:7d}")
-        print(f"Final: A={res.history[-1][0]}, B={res.history[-1][1]}\n")
+    test_cases = [(0, 1), (3, 7)]
+
+    for a_init, b_init in test_cases:
+        outcome = run_fibonacci(a_init, b_init, 12)
+        display_run(outcome)
