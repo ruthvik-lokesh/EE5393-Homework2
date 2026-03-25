@@ -3,40 +3,52 @@ from dataclasses import dataclass
 from typing import List
 
 @dataclass
-class BiquadResult:
-    inputs: List[float]
-    outputs: List[float]
+class FilterOutput:
+    input_signal: List[float]
+    output_signal: List[float]
 
-def biquad_filter(inputs: List[float]) -> BiquadResult:
-    """Second-order IIR (biquad) filter from Figure 2.
+def simulate_biquad(input_signal: List[float]) -> FilterOutput:
+    """
+    Implements a second-order IIR filter:
 
-    Recurrence:
         y[n] = (x[n] + x[n-1] + x[n-2] + y[n-1] + y[n-2]) / 8
 
-    Initial conditions: x[-1] = x[-2] = y[-1] = y[-2] = 0.
-    Each input value corresponds to one RGB clock cycle.
-    After recording y[n] the output register is cleared (sampled externally).
+    Assumes zero initial conditions.
     """
 
-    x1 = x2 = 0.0  # x[n-1], x[n-2]
-    y1 = y2 = 0.0  # y[n-1], y[n-2]
-    outputs: List[float] = []
+    # Delay elements for inputs and outputs
+    x_prev1 = 0.0
+    x_prev2 = 0.0
+    y_prev1 = 0.0
+    y_prev2 = 0.0
 
-    for x in inputs:
-        y = (x + x1 + x2 + y1 + y2) / 8.0
-        outputs.append(y)
+    output_signal: List[float] = []
 
-        # Shift delay registers
-        x2, x1 = x1, x
-        y2, y1 = y1, y
+    for current in input_signal:
+        # Compute current output
+        y_curr = (current + x_prev1 + x_prev2 + y_prev1 + y_prev2) / 8.0
+        output_signal.append(y_curr)
 
-    return BiquadResult(inputs, outputs)
+        # Update state (shift registers)
+        x_prev2 = x_prev1
+        x_prev1 = current
+
+        y_prev2 = y_prev1
+        y_prev1 = y_curr
+
+    return FilterOutput(input_signal, output_signal)
+
+
+def print_results(result: FilterOutput) -> None:
+    print("Second-Order Biquad Simulation")
+    print(f"{'n':>3} {'Input':>10} {'Output':>12}")
+
+    for idx, (inp, out) in enumerate(zip(result.input_signal, result.output_signal), start=1):
+        print(f"{idx:>3} {inp:>10.2f} {out:>12.6f}")
+
 
 if __name__ == "__main__":
-    inp = [100, 5, 500, 20, 250]
-    res = biquad_filter(inp)
+    test_input = [100, 5, 500, 20, 250]
 
-    print("Biquad filter --- 5-cycle simulation")
-    print(f"{'Cycle':>5} {'x[n]':>7} {'y[n]':>12}")
-    for i, (x, y) in enumerate(zip(res.inputs, res.outputs), start=1):
-        print(f"{i:5d} {x:7.1f} {y:12.6f}")
+    result = simulate_biquad(test_input)
+    print_results(result)
